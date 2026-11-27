@@ -1,0 +1,54 @@
+rules_version = '2';
+
+// قواعد أمان Firestore لتطبيق FixItFast.
+// النشر:  firebase deploy --only firestore:rules
+// أو انسخ المحتوى إلى Firebase Console > Firestore > Rules.
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    // المسؤول = مستند admins/{uid} يحتوي isAdmin: true
+    // (يُضاف يدوياً من Firebase Console، ولا يمكن لأي مستخدم إنشاؤه بنفسه).
+    function isAdmin() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+        && get(/databases/$(database)/documents/admins/$(request.auth.uid)).data.isAdmin == true;
+    }
+
+    // كل مستخدم يقرأ مستند صلاحيته فقط، ولا أحد يكتب من التطبيق.
+    match /admins/{uid} {
+      allow read: if signedIn() && request.auth.uid == uid;
+      allow write: if false;
+    }
+
+    // الملف الشخصي: صاحبه فقط يقرأ ويعدّل، والمسؤول يقرأ.
+    match /users/{uid} {
+      allow read: if signedIn() && (request.auth.uid == uid || isAdmin());
+      allow create, update: if signedIn() && request.auth.uid == uid;
+      allow delete: if false;
+    }
+
+    // الشكاوى
+    match /complaints/{complaintId} {
+      // المستخدم يرى شكاواه فقط، والمسؤول يرى الكل.
+      allow read: if signedIn()
+        && (resource.data.userId == request.auth.uid || isAdmin());
+
+      // المستخدم ينشئ شكوى باسمه فقط، وتبدأ دائماً بحالة Pending.
+      allow create: if signedIn()
+        && request.resource.data.userId == request.auth.uid
+        && request.resource.data.status == 'Pending';
+
+      // المسؤول فقط يغيّر الحالة، ولا يمكنه تعديل باقي الحقول.
+      allow update: if isAdmin()
+        && request.resource.data.diff(resource.data).affectedKeys()
+             .hasOnly(['status', 'resolvedAt'])
+        && request.resource.data.status in ['Pending', 'InProgress', 'Completed'];
+
+      allow delete: if isAdmin();
+    }
+  }
+}

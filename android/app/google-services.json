@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "73475652546",
+    "project_id": "alroad-76fe5",
+    "storage_bucket": "alroad-76fe5.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:73475652546:android:b95d0838c0c8bbc752f45b",
+        "android_client_info": {
+          "package_name": "com.example.fixltfast"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAhfaLjLnEiABadl0ZIllobfIchpIwwOvM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
